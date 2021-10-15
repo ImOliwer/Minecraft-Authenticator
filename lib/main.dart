@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_authenticator/callback.dart';
-import 'package:flutter_authenticator/screens/auth/requests.dart';
 import 'package:flutter_authenticator/screens/login.dart';
 import 'authentication.dart';
 
@@ -18,10 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
       ),
-      home: const LoginPhase(),
-      routes: {
-        '/authorized/requests': (BuildContext context) => const AuthorizedRequests()
-      }
+      home: const LoginPhase()
     );
   }
 }

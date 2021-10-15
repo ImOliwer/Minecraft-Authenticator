@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_authenticator/data/player.dart';
+import 'package:flutter_authenticator/screens/auth/requests.dart';
 import 'package:flutter_authenticator/util/messages.dart';
 import 'package:flutter_authenticator/util/regexes.dart';
 import 'package:flutter_authenticator/util/theme.dart';
@@ -228,7 +230,21 @@ class LoginPhaseState extends State<LoginPhase> {
                                 return;
                               }
                               state.save();
-                              Navigator.pushNamed(context, '/authorized/requests');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (BuildContext routeContext) => const AuthorizedRequests(),
+                                  settings: const RouteSettings(
+                                    arguments: <String, dynamic>{
+                                      // TODO: Fetch from backend by credentials provided
+                                      'player': Player(
+                                        name: "ImOliwer", 
+                                        uniqueId: "f9633de6-6a80-4964-ac30-e5d8c5766016"
+                                      )
+                                    }
+                                  )
+                                )
+                              );
                               // if the request sent to db comes back with anything but a 200, clear password but keep email
                               /*password = "";
                               _passwordFieldKey.currentState!.didChange(null);*/

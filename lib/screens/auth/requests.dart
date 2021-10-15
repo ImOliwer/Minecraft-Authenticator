@@ -5,6 +5,7 @@ import 'package:flutter/animation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_authenticator/data/authentication.dart';
+import 'package:flutter_authenticator/data/player.dart';
 import 'package:flutter_authenticator/util/lists.dart';
 import 'package:flutter_authenticator/util/pair.dart';
 import 'package:flutter_authenticator/util/theme.dart';
@@ -13,16 +14,14 @@ class AuthorizedRequests extends StatefulWidget {
   const AuthorizedRequests({ Key? key }) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => AuthorizedRequestsState();
+  State<StatefulWidget> createState() => _AuthorizedRequestsState();
 }
 
-class AuthorizedRequestsState extends State<AuthorizedRequests> with SingleTickerProviderStateMixin {
-  static const examplePlayerName = "ImOliwer";
-  static const examplePlayerId = "f9633de66a804964ac30e5d8c5766016";
-  
+class _AuthorizedRequestsState extends State<AuthorizedRequests> with SingleTickerProviderStateMixin {
+  Player? _player;
+  AuthenticationRequest? _currentRequest;
   int _expirationCountdown = 60;
   Timer? _expirationTimer;
-  AuthenticationRequest? _currentRequest;
 
   void _updateRequest(AuthenticationRequest request) => setState(() {
     _currentRequest = request;
@@ -43,16 +42,6 @@ class AuthorizedRequestsState extends State<AuthorizedRequests> with SingleTicke
   }
 
   @override
-  void initState() {
-    _updateRequest(AuthenticationRequest(
-      serverPointer: "mc.someserver.net",
-      sentFromLocation: "Malmo, Sweden",
-      requestedAt: DateTime.now()
-    ));
-    super.initState();
-  }
-
-  @override
   void dispose() {
     _expirationTimer?.cancel();
     super.dispose();
@@ -64,7 +53,12 @@ class AuthorizedRequestsState extends State<AuthorizedRequests> with SingleTicke
       child: Scaffold(
         body: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final double maxWidth      = constraints.maxWidth;
+            if (_player == null) {
+              final Map<String, dynamic> routeArguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+              _player = routeArguments['player'];
+            }
+
+            final double maxWidth = constraints.maxWidth;
             final double initialHeight = constraints.maxHeight;
             
             return Container(
@@ -87,14 +81,14 @@ class AuthorizedRequestsState extends State<AuthorizedRequests> with SingleTicke
                         Padding(
                           padding: const EdgeInsets.only(right: 10.0),
                           child: Image.network(
-                            'https://crafatar.com/avatars/$examplePlayerId?overlay&size=35'
+                            'https://crafatar.com/avatars/${_player!.uniqueId.replaceAll('-', '')}?overlay&size=35'
                           )
                         ),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
+                          children: [
+                            const Text(
                               "Welcome back,",
                               style: TextStyle(
                                 fontFamily: 'Roboto',
@@ -104,8 +98,8 @@ class AuthorizedRequestsState extends State<AuthorizedRequests> with SingleTicke
                               ),
                             ),
                             Text(
-                              examplePlayerName,
-                              style: TextStyle(
+                              _player!.name,
+                              style: const TextStyle(
                                 fontFamily: 'Roboto',
                                 fontSize: 13,
                                 fontWeight: FontWeight.normal,
