@@ -4,6 +4,7 @@ import SoftwareLicenser from "../controller/SoftwareLicenser";
 import Database from "../database/Database";
 import { Server } from "../database/Query";
 import { LICENSE_WEB_LOCATION } from "../util/URL";
+import * as Email from "email-validator";
 const cors = require("cors"); // Declaration is invalid so this will do..
 
 /**
@@ -27,9 +28,6 @@ export default {
       return stringOf.length === length ? undefined : stringOf;
     }
 
-    // Regex.
-    const emailRegex = RegExp('[a-zA-Z0-9_\\.]+@([a-zA-Z]+\\.([a-zA-Z]{3})|[a-zA-Z]+\\.[a-zA-Z]{2}\\.[a-zA-Z]{2})');
-
     // Add a new server with license.
     application.post('/servers/add', cors(licenseCorsOptions), async (request, response) => {
       const body = request.body;
@@ -49,7 +47,7 @@ export default {
         });
       }
 
-      if (!emailRegex.test(email!)) {
+      if (!Email.validate(email!)) {
         return response.status(400).send({
           message: 'an invalid email was specified'
         });
