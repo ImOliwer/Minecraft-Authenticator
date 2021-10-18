@@ -47,11 +47,6 @@ export const TableCreation = {
 
 // This constant represents an object of all 'server' related queries.
 export const Server = {
-  EXISTS_BY_CLIENT: SERVERS_TABLE
-    .select(SERVERS_TABLE.client)
-    .from(SERVERS_TABLE)
-    .where(SERVERS_TABLE.client.equals("anything"))
-    .toQuery(),
   INSERT: SERVERS_TABLE
     .insert({
       client: 'client',

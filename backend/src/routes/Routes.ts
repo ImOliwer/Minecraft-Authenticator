@@ -39,19 +39,12 @@ export default {
         });
       }
 
-      const existsResult = await database.query(Server.EXISTS_BY_CLIENT, client);
-      if (existsResult.rowCount > 0) {
+      try {
+        const license = licenser.create({ address });
+        await database.query(Server.INSERT, client, address, license);
+      } catch (_) {
         return response.status(400).send({
           message: 'client already exists'
-        });
-      }
-
-      const license = licenser.create({ address });
-      const insertResult = await database.query(Server.INSERT, client, address, license);
-      
-      if (insertResult.rowCount == 0) {
-        return response.status(400).send({
-          message: 'failed setting the address up with a license'
         });
       }
 
