@@ -18,39 +18,55 @@ export default {
     // Cors options of license related endpoints.
     const licenseCorsOptions = { origin: LICENSE_WEB_LOCATION };
 
+    // Utils.
+    const stringUndefinedIfLength = (it: any, length: number): string | undefined => {
+      if (!it || typeof it !== 'string') {
+        return undefined;
+      }
+      const stringOf = it.trim();
+      return stringOf.length === length ? undefined : stringOf;
+    }
+
+    // Regex.
+    const emailRegex = RegExp('[a-zA-Z0-9_\\.]+@([a-zA-Z]+\\.([a-zA-Z]{3})|[a-zA-Z]+\\.[a-zA-Z]{2}\\.[a-zA-Z]{2})');
+
     // Add a new server with license.
     application.post('/servers/add', cors(licenseCorsOptions), async (request, response) => {
       const body = request.body;
       if (!body) {
         return response.status(400).send({
-          message: 'client and address must be specified'
+          message: 'email, client and address must be specified'
         });
       }
       
-      let client = body.client;
-      let address = body.address;
+      const email   = stringUndefinedIfLength(body.email, 0);
+      const client  = stringUndefinedIfLength(body.client, 0);
+      const address = stringUndefinedIfLength(body.address, 0);
 
-      if (
-        !client || typeof client !== 'string' || (client = client.trim()).length == 0 || 
-        !address || typeof address !== 'string' || (address = address.trim()).length == 0
-      ) {
+      if (!email || !client || !address) {
         return response.status(400).send({
-          message: 'client and/or address specified was invalid'
+          message: 'email, client and/or address specified was invalid'
+        });
+      }
+
+      if (!emailRegex.test(email!)) {
+        return response.status(400).send({
+          message: 'an invalid email was specified'
         });
       }
 
       try {
         const license = licenser.create({ address });
-        await database.query(Server.INSERT, client, address, license);
+        await database.query(Server.INSERT, email, client, address, license);
       } catch (_) {
         return response.status(400).send({
-          message: 'client already exists'
+          message: 'client email already exists'
         });
       }
 
       response.send({
         message: 'successfully set up address with a license',
-        data: { client, address }
+        data: { email, client, address }
       });
     });
 

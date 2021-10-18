@@ -22,11 +22,15 @@ const SERVERS_TABLE = SQL.define({
   name: 'servers',
   schema: '',
   columns: {
-    'client': {
+    'email': {
       dataType: 'varchar',
       notNull: true,
       unique: true,
       primaryKey: true
+    },
+    'client': {
+      dataType: 'varchar',
+      notNull: true
     },
     'address': {
       dataType: 'varchar',
@@ -49,13 +53,14 @@ export const TableCreation = {
 export const Server = {
   INSERT: SERVERS_TABLE
     .insert({
+      email: 'email',
       client: 'client',
       address: 'address',
       licenseKey: 'licenseKey'
     })
     .toQuery(),
   FETCH_ALL_IGNORING_LICENSE: SERVERS_TABLE
-    .select(SERVERS_TABLE.client, SERVERS_TABLE.address)
+    .select(SERVERS_TABLE.email, SERVERS_TABLE.client, SERVERS_TABLE.address)
     .from(SERVERS_TABLE)
     .toQuery()
 };
