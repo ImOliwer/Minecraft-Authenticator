@@ -48,3 +48,4 @@ app.*.map.json
 # Backend
 /backend/dist
 /backend/resources/private_key.pem
+/backend/resources/database.properties
