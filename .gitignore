@@ -46,6 +46,7 @@ app.*.map.json
 /android/app/release
 
 # Backend
+/backend/node_modules
 /backend/dist
 /backend/resources/private_key.pem
 /backend/resources/database.properties
