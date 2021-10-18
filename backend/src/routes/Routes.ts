@@ -3,7 +3,7 @@ import { Application } from "express";
 import SoftwareLicenser from "../controller/SoftwareLicenser";
 import Database from "../database/Database";
 import ServerRoutes from "./ServerRoutes";
-const cors = require("cors"); // Declaration is invalid so this will do..
+import UserRoutes from "./UserRoutes";
 
 /**
  * Export the representative.
@@ -28,6 +28,14 @@ export default {
       application, 
       database, 
       licenser, 
+      stringUndefinedIfLength
+    );
+
+    // Register user routes.
+    UserRoutes.register(
+      application,
+      database,
+      licenser,
       stringUndefinedIfLength
     );
   }
