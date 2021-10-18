@@ -51,6 +51,14 @@ export default class Database {
   }
 
   /**
+   * Relative to "see" - just without a 'values' specification.
+   * @see Database.query
+   */
+  async queryNoValues(it: SQL.QueryLike): Promise<QueryResult<any>> {
+    return await this.instance.query(it);
+  }
+
+  /**
    * Dispatch a query by string.
    * 
    * @param {string} it the query to dispatch.

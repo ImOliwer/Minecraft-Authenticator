@@ -2,7 +2,7 @@
 import SQL from "sql";
 
 // Users table.
-const USERS_TABLE = SQL.define({
+export const USERS_TABLE = SQL.define({
   name: 'users',
   schema: '',
   columns: {
@@ -18,7 +18,7 @@ const USERS_TABLE = SQL.define({
 });
 
 // Servers table.
-const SERVERS_TABLE = SQL.define({
+export const SERVERS_TABLE = SQL.define({
   name: 'servers',
   schema: '',
   columns: {
