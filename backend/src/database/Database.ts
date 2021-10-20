@@ -2,7 +2,7 @@
 import { Pool, QueryResult } from "pg";
 import PropertiesReader from "properties-reader";
 import SQL from "sql";
-import { TableCreation } from "./Query";
+import Query from "./Query";
 
 /**
  * This class represents the controller of our database.
@@ -43,10 +43,13 @@ export default class Database {
    * Query all preparation batches.
    */
   async prepare() {
+    // table queries
+    const { USERS, SERVERS } = Query.Table;
+
     // create the users & servers tables if they don't exist
     await Promise.all([
-      this.instance.query(TableCreation.USERS.text),
-      this.instance.query(TableCreation.SERVERS.text)
+      this.instance.query(USERS.text),
+      this.instance.query(SERVERS.text)
     ]);
   }
 

@@ -2,8 +2,8 @@
 import { Application } from "express";
 import SoftwareLicenser from "../controller/SoftwareLicenser";
 import Database from "../database/Database";
-import { Server, SERVERS_TABLE } from "../database/Query";
-import { LICENSE_WEB_LOCATION } from "../util/URL";
+import Query, { SERVERS_TABLE } from "../database/Query";
+import { LICENSE_WEB_ORIGIN } from "../util/Origins";
 import * as Email from "email-validator";
 const cors = require("cors"); // Declaration is invalid so this will do..
 
@@ -18,7 +18,10 @@ export default {
     stringUndefinedIfLength: (it: any, length: number) => string | undefined
   ) => {
     // Cors options of license related endpoints.
-    const licenseCorsOptions = { origin: LICENSE_WEB_LOCATION };
+    const licenseCorsOptions = { origin: LICENSE_WEB_ORIGIN };
+
+    // Queries.
+    const { FETCH_ALL_IGNORING_LICENSE, INSERT } = Query.Server;
 
     // Add a new server with license.
     application.post('/servers/add', cors(licenseCorsOptions), async (request, response) => {
@@ -47,7 +50,7 @@ export default {
 
       try {
         const license = licenser.create({ address });
-        await database.query(Server.INSERT, email, client, address, license);
+        await database.query(INSERT, email, client, address, license);
       } catch (_) {
         return response.status(400).send({
           message: 'client email already exists'
@@ -117,7 +120,7 @@ export default {
 
     // Get all servers.
     application.get('/servers', cors(licenseCorsOptions), async (_, response) => {
-      const found = await database.query(Server.FETCH_ALL_IGNORING_LICENSE);
+      const found = await database.query(FETCH_ALL_IGNORING_LICENSE);
       response.send({ data: found?.rows });
     });
   }
