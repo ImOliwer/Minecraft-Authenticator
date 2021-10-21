@@ -34,7 +34,7 @@ application.use(json());
 // Start.
 async function start() {
   // Prepare database.
-  await database.prepare();
+  await database.sync();
 
   // Endpoints.
   Routes.register(

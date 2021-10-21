@@ -2,7 +2,6 @@
 import { Application } from "express";
 import SoftwareLicenser from "../controller/SoftwareLicenser";
 import Database from "../database/Database";
-import Query, { SERVERS_TABLE } from "../database/Query";
 import { LICENSE_WEB_ORIGIN } from "../util/Origins";
 import * as Email from "email-validator";
 const cors = require("cors"); // Declaration is invalid so this will do..
@@ -20,10 +19,7 @@ export default {
     // Cors options of license related endpoints.
     const licenseCorsOptions = { origin: LICENSE_WEB_ORIGIN };
 
-    // Queries.
-    const { FETCH_ALL_IGNORING_LICENSE, INSERT } = Query.Server;
-
-    // Add a new server with license.
+    // Add a new server.
     application.post('/servers/add', cors(licenseCorsOptions), async (request, response) => {
       const body = request.body;
       if (!body) {
@@ -49,8 +45,13 @@ export default {
       }
 
       try {
-        const license = licenser.create({ address });
-        await database.query(INSERT, email, client, address, license);
+        const license = licenser.create({ email });
+        await database.serverModel.create({
+          email,
+          client,
+          address,
+          licenseKey: license
+        });
       } catch (_) {
         return response.status(400).send({
           message: 'client email already exists'
@@ -83,45 +84,59 @@ export default {
         });
       }
 
-      const partial: Partial<{
-        email: unknown,
-        client: unknown,
-        address: unknown,
-        licenseKey: unknown
-      }> = {};
+      const toUpdate: {
+        email?: string,
+        client?: string,
+        address?: string,
+        licenseKey?: string
+      } = {};
 
-      if (newEmail) {
-        partial.email = newEmail;
+      if (newEmail && newEmail !== email) {
+        toUpdate.email = newEmail;
+        toUpdate.licenseKey = licenser.create({ newEmail });
       }
 
       if (newClient) {
-        partial.client = newClient;
+        toUpdate.client = newClient;
       }
 
       if (newAddress) {
-        partial.address = newAddress;
+        toUpdate.address = newAddress;
       }
 
-      const updateResult = await database.queryNoValues(
-        SERVERS_TABLE
-          .update(partial)
-          .where(SERVERS_TABLE.email.equals(email))
-          .toQuery()
+      const updateResult = await database.serverModel.update(
+        toUpdate, { 
+          where: { email },
+          returning: true
+        }
       );
 
-      if (updateResult.rowCount == 0) {
+      if (updateResult[1].length == 0) {
         return response.status(400).send({
           message: 'email is not registered in the database'
         });
       }
 
-      response.send({ newValues: partial });
+      if (toUpdate.licenseKey) {
+        delete toUpdate.licenseKey;
+      }
+
+      response.send({ newValues: toUpdate });
     });
 
     // Get all servers.
     application.get('/servers', cors(licenseCorsOptions), async (_, response) => {
-      const found = await database.query(FETCH_ALL_IGNORING_LICENSE);
-      response.send({ data: found?.rows });
+      const found = await database.serverModel.findAll();
+      response.send({ 
+        data: found.map(it => { 
+          return {
+            identifier: it.identifier, 
+            email: it.email, 
+            client: it.client, 
+            address: it.address
+          };
+        })
+      });
     });
   }
 };

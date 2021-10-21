@@ -4,7 +4,6 @@ import SoftwareLicenser from "../controller/SoftwareLicenser";
 import Database from "../database/Database";
 import BCrypt from "bcrypt";
 import * as Email from "email-validator";
-import Query from "../database/Query";
 import { SERVER_ORIGIN } from "../util/Origins";
 const cors = require("cors"); // Declaration is invalid so this will do..
 
@@ -18,16 +17,13 @@ const PASSWORD_SALT_ROUNDS = 12;
  */
 export default {
   register: (
-    application: Application, 
-    database: Database, 
-    licenser: SoftwareLicenser,
+    application: Application,
+    database: Database,
+    _: SoftwareLicenser,
     stringUndefinedIfLength: (it: any, length: number) => string | undefined
   ) => {
     // cors options for (our) server related endpoints.
     const serverOnlyCorsOptions = { origin: SERVER_ORIGIN };
-
-    // queries
-    const { SELECT_BY_EMAIL, INSERT } = Query.User;
 
     // create a user
     application.post('/users/create', cors(serverOnlyCorsOptions), async (request, response) => {
@@ -53,8 +49,11 @@ export default {
         });
       }
 
-      const selectResult = await database.query(SELECT_BY_EMAIL, email);
-      if (selectResult.rowCount > 0) {
+      const selectResult = await database.userModel.findOne({
+        where: { email }
+      });
+
+      if (selectResult != null) {
         return response.status(400).send({
           message: 'email already exists'
         });
@@ -62,19 +61,18 @@ export default {
 
       const hashedPassword = await BCrypt.hash(password, PASSWORD_SALT_ROUNDS);
       try {
-        const insertResult = await database.query(INSERT, email, hashedPassword);
-        
-        if (insertResult.rowCount == 0) {
-          return response.status(500).send({
-            message: 'failed creating user'
-          });
-        }
+        await database.userModel.create({
+          email,
+          password: hashedPassword,
+          linkedName: null,
+          linkedUniqueId: null
+        });
 
         response.send({
           message: 'successfully created user',
           data: { email }
         });
-      } catch (_) {
+      } catch (e) {
         response.status(500).send({
           message: 'failed creating user'
         });

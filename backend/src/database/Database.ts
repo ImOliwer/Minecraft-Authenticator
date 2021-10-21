@@ -1,17 +1,27 @@
 // Imports.
-import { Pool, QueryResult } from "pg";
+import { ModelCtor, Sequelize } from "sequelize";
 import PropertiesReader from "properties-reader";
-import SQL from "sql";
-import Query from "./Query";
+import User, { createUserModel } from "../model/User";
+import AuthorizedServer, { createServerModel } from "../model/AuthorizedServer";
 
 /**
  * This class represents the controller of our database.
  */
 export default class Database {
   /**
-   * @returns {Pool} this property represents the PostgreSQL pool.
+   * @returns {Sequelize} this property represents the instance for PostgreSQL handles.
    */
-  instance: Pool;
+  readonly instance: Sequelize;
+
+  /**
+   * @returns {ModelCtor<User>} the user model.
+   */
+  public readonly userModel: ModelCtor<User>;
+
+  /**
+   * @returns {ModelCtor<AuthorizedServer>} the server model.
+   */
+  public readonly serverModel: ModelCtor<AuthorizedServer>;
 
   /**
    * Primary constructor.
@@ -27,48 +37,27 @@ export default class Database {
     const port     = properties.get('port');
 
     if (!username || !password || !hostname || !database || (!port || typeof port !== 'number')) {
-      throw new Error("Username, password, hostname, database or table is invalid.");
+      throw new Error("Username, password, hostname, database and/or table are invalid.");
     }
 
-    this.instance = new Pool({
-      user    : username as string,
+    this.instance = new Sequelize({
+      dialect : 'postgres',
+      username: username as string,
       password: password as string,
       database: database as string,
       host    : hostname as string,
-      port    : port as number
+      port    : port as number,
+      logging : false
     });
+
+    this.userModel   = createUserModel(this.instance);
+    this.serverModel = createServerModel(this.instance);
   }
 
   /**
-   * Query all preparation batches.
+   * Synchronize all batches.
    */
-  async prepare() {
-    // table queries
-    const { USERS, SERVERS } = Query.Table;
-
-    // create the users & servers tables if they don't exist
-    await Promise.all([
-      this.instance.query(USERS.text),
-      this.instance.query(SERVERS.text)
-    ]);
-  }
-
-  /**
-   * Relative to "see" - just without a 'values' specification.
-   * @see Database.query
-   */
-  async queryNoValues(it: SQL.QueryLike): Promise<QueryResult<any>> {
-    return await this.instance.query(it);
-  }
-
-  /**
-   * Dispatch a query by string.
-   * 
-   * @param {string} it the query to dispatch.
-   * @param {any[]} values array of values to pass with the query.
-   * @returns {Promise<QueryResult>}
-   */
-  async query(it: SQL.QueryLike, ...values: any): Promise<QueryResult<any>> {
-    return await this.instance.query(it.text, values);
+  async sync() {
+    await this.instance.sync();
   }
 }
