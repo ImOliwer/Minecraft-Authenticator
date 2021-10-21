@@ -64,7 +64,7 @@ export default {
     });
 
     // Edit a server by email.
-    application.patch('/servers/edit/:email', cors(licenseCorsOptions), async (request, response) => {
+    application.put('/servers/edit/:email', cors(licenseCorsOptions), async (request, response) => {
       const email = request.params['email'];
       if (!email || !Email.validate(email!)) {
         return response.status(400).send({
