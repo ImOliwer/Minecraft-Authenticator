@@ -70,7 +70,7 @@ export default {
         });
       }
 
-      if (Buffer.byteLength(password) > 72) {
+      if (Buffer.byteLength(password, 'utf8') > 72) {
         return response.status(400).send({
           message: 'password too large'
         });
@@ -124,7 +124,7 @@ export default {
         });
       }
 
-      if (Buffer.byteLength(password) > 72) {
+      if (Buffer.byteLength(password, 'utf8') > 72) {
         return response.status(400).send({
           message: 'could not find email with matching password'
         });
