@@ -27,14 +27,14 @@ export default interface User extends Model {
   password: string;
 
   /**
-   * @returns {string | null} minecraft name of this user if linked, otherwise null.
+   * @returns {string} minecraft name of this user.
    */
-  linkedName?: string | null;
+  linkedName: string;
 
   /**
-   * @returns {string | null} minecraft unique id of this user if linked, otherwise null.
+   * @returns {string} minecraft unique id of this user.
    */
-  linkedUniqueId?: string | null;
+  linkedUniqueId: string;
 }
 
 /**
@@ -58,13 +58,11 @@ export const USER_MODEL_COLUMNS = {
   },
   linkedName: {
     type: STRING(16),
-    allowNull: true,
-    defaultValue: null
+    allowNull: false
   },
   linkedUniqueId: {
     type: STRING(36),
-    allowNull: true,
-    defaultValue: null
+    allowNull: false
   }
 };
 

@@ -10,7 +10,7 @@ const cors = require("cors"); // Declaration is invalid so this will do..
 /**
  * @returns {number} the salt rounds for password hashing.
  */
-const PASSWORD_SALT_ROUNDS = 12;
+const PASSWORD_SALT_ROUNDS = 10;
 
 /**
  * Export the representative.
@@ -27,13 +27,15 @@ export default {
 
     // create a user
     application.post('/users/create', cors(serverOnlyCorsOptions), async (request, response) => {
-      const body     = request.body;
-      const email    = stringUndefinedIfLength(body?.email, 0);
-      const password = stringUndefinedIfLength(body?.password, 0);
+      const body           = request.body;
+      const email          = stringUndefinedIfLength(body?.email, 0);
+      const password       = stringUndefinedIfLength(body?.password, 0);
+      const linkedName     = stringUndefinedIfLength(body?.linkedName, 0);
+      const linkedUniqueId = stringUndefinedIfLength(body?.linkedUniqueId, 0);
 
-      if (!email || !password) {
+      if (!email || !password || !linkedName || !linkedUniqueId) {
         return response.status(400).send({
-          message: 'missing email and/or password'
+          message: 'missing email, password, ingame name and/or unique id'
         });
       }
 
@@ -46,6 +48,31 @@ export default {
       if (password.length < 6) {
         return response.status(400).send({
           message: 'password must contain at least 6 characters'
+        });
+      }
+
+      const linkedNameLength = linkedName.length;
+      if (linkedNameLength < 3 || linkedNameLength > 16) {
+        return response.status(400).send({
+          message: 'ingame name must be at least 3 characters and at highest 16'
+        });
+      }
+
+      if (linkedUniqueId.length != 36) {
+        return response.status(400).send({
+          message: 'unique id must be 36 characters'
+        });
+      }
+    
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(linkedUniqueId)) {
+        return response.status(400).send({
+          message: 'invalid unique id'
+        });
+      }
+
+      if (Buffer.byteLength(password) > 72) {
+        return response.status(400).send({
+          message: 'password too large'
         });
       }
 
@@ -64,8 +91,8 @@ export default {
         await database.userModel.create({
           email,
           password: hashedPassword,
-          linkedName: null,
-          linkedUniqueId: null
+          linkedName,
+          linkedUniqueId
         });
 
         response.send({
@@ -77,6 +104,56 @@ export default {
           message: 'failed creating user'
         });
       }
+    });
+
+    // validate user
+    application.post('/users/validate', async (request, response) => {
+      const body     = request.body;
+      const email    = stringUndefinedIfLength(body?.email, 0);
+      const password = stringUndefinedIfLength(body?.password, 0);
+
+      if (!email || !password) {
+        return response.status(400).send({
+          message: 'missing email and/or password'
+        });
+      }
+
+      if (!Email.validate(email)) {
+        return response.status(400).send({
+          message: 'email is invalid'
+        });
+      }
+
+      if (Buffer.byteLength(password) > 72) {
+        return response.status(400).send({
+          message: 'could not find email with matching password'
+        });
+      }
+
+      const result = await database.userModel.findOne({
+        where: { email }
+      });
+
+      if (!result) {
+        return response.status(400).send({
+          message: 'could not find email with matching password'
+        });
+      }
+
+      if (!await BCrypt.compare(password, result.password)) {
+        return response.status(400).send({
+          message: 'could not find email with matching password'
+        });
+      }
+
+      response.send({
+        message: 'user was successfully validated',
+        data: {
+          email,
+          linkedName: result.linkedName,
+          linkedUniqueId: result.linkedUniqueId
+        }
+      });
     });
   }
 };
