@@ -65,12 +65,6 @@ export default {
         });
       }
 
-      /*if (Buffer.byteLength(password, 'utf8') > 72) {
-        return response.status(400).send({
-          message: 'password too large'
-        });
-      }*/
-
       const selectResult = await database.userModel.findOne({
         where: { email }
       });
@@ -119,26 +113,20 @@ export default {
         });
       }
 
-      /*if (Buffer.byteLength(password, 'utf8') > 72) {
-        return response.status(400).send({
-          message: 'could not find email with matching password'
-        });
-      }*/
-
       const result = await database.userModel.findOne({
         where: { email }
       });
 
       if (!result) {
         return response.status(400).send({
-          message: 'could not find email with matching password'
+          message: 'invalid email and/or password'
         });
       }
 
       try {
         if (!await Argon2.verify(result.password, password)) {
           return response.status(400).send({
-            message: 'could not find email with matching password'
+            message: 'invalid email and/or password'
           });
         }
       } catch (_) {
