@@ -2,15 +2,10 @@
 import { Application } from "express";
 import SoftwareLicenser from "../controller/SoftwareLicenser";
 import Database from "../database/Database";
-import BCrypt from "bcrypt";
+import Argon2 from "argon2";
 import * as Email from "email-validator";
 import { SERVER_ORIGIN } from "../util/Origins";
 const cors = require("cors"); // Declaration is invalid so this will do..
-
-/**
- * @returns {number} the salt rounds for password hashing.
- */
-const PASSWORD_SALT_ROUNDS = 10;
 
 /**
  * Export the representative.
@@ -70,11 +65,11 @@ export default {
         });
       }
 
-      if (Buffer.byteLength(password, 'utf8') > 72) {
+      /*if (Buffer.byteLength(password, 'utf8') > 72) {
         return response.status(400).send({
           message: 'password too large'
         });
-      }
+      }*/
 
       const selectResult = await database.userModel.findOne({
         where: { email }
@@ -86,7 +81,7 @@ export default {
         });
       }
 
-      const hashedPassword = await BCrypt.hash(password, PASSWORD_SALT_ROUNDS);
+      const hashedPassword = await Argon2.hash(password);
       try {
         await database.userModel.create({
           email,
@@ -124,11 +119,11 @@ export default {
         });
       }
 
-      if (Buffer.byteLength(password, 'utf8') > 72) {
+      /*if (Buffer.byteLength(password, 'utf8') > 72) {
         return response.status(400).send({
           message: 'could not find email with matching password'
         });
-      }
+      }*/
 
       const result = await database.userModel.findOne({
         where: { email }
@@ -140,9 +135,15 @@ export default {
         });
       }
 
-      if (!await BCrypt.compare(password, result.password)) {
-        return response.status(400).send({
-          message: 'could not find email with matching password'
+      try {
+        if (!await Argon2.verify(result.password, password)) {
+          return response.status(400).send({
+            message: 'could not find email with matching password'
+          });
+        }
+      } catch (_) {
+        return response.status(500).send({
+          message: 'failed verifying user'
         });
       }
 
